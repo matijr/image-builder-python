@@ -1,0 +1,33 @@
+# K8s deployment template
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ deployment_name }}
+  labels:
+    app: {{ deployment_name }}
+spec:
+  replicas: {{ deployment_replicas }}
+  selector:
+    matchLabels:
+      app: {{ deployment_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ deployment_name }}
+    spec:
+      containers:
+      - name: {{ deployment_name }}
+        image: {{ deployment_image }}
+        imagePullPolicy: Never
+        ports:
+        - containerPort: {{ deployment_port }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ deployment_port }}
+          initialDelaySeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ deployment_port }}
+          initialDelaySeconds: 10

@@ -1,0 +1,46 @@
+# Define variables for the playbook
+- hosts: localhost
+  vars:
+    docker_image: python-flask
+    docker_tag: latest
+    registry_ip: docker.io/library/
+    deployment_image: "{{ registry_ip }}{{ docker_image }}:{{ docker_tag }}"
+    deployment_name: flask-api
+    deployment_port: 5000
+    deployment_replicas: 1
+
+  # Create Docker image and push to minikube registry
+  tasks:
+    # Clean up existing deployment and image
+    - name: Delete existing deployment if it exists
+      ansible.builtin.command:
+        cmd: kubectl delete deployment {{ deployment_name }}
+      ignore_errors: yes
+
+    - name: Remove existing image from minikube registry if it exists
+      ansible.builtin.command:
+        cmd: minikube image rm "{{ docker_image }}:{{ docker_tag }}"
+      ignore_errors: yes
+
+    - name: Create Docker image
+      community.docker.docker_image:
+        build:
+          path: .
+          dockerfile: dockerfile.j2
+        name: "{{ docker_image }}"
+        tag: "{{ docker_tag }}"
+        source: build
+
+    - name: Load image in 'minikube' registry
+      ansible.builtin.command:
+        cmd: minikube image load "{{ docker_image }}:{{ docker_tag }}"
+
+    # Create K8s deployment
+    - name: Generate deployment
+      ansible.builtin.template:
+        src: templates/deployment.yaml.j2
+        dest: /tmp/deployment.yaml
+    
+    - name: Apply deployment
+      ansible.builtin.command:
+        cmd: kubectl apply -f /tmp/deployment.yaml

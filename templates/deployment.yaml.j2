@@ -21,6 +21,11 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: {{ deployment_port }}
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017"
+        - name: MONGO_DB
+          value: "restdb"
         readinessProbe:
           httpGet:
             path: /

@@ -8,7 +8,7 @@ from mergedeep import merge, Strategy
 app = Flask(__name__)
 
 mongo_dbname = os.getenv("MONGO_DB", "restdb")
-mongo_uri = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017")
+mongo_uri = os.getenv("MONGO_URI", "mongodb://mongodb:27017")
 
 app.config["MONGO_DBNAME"] = mongo_dbname
 app.config["MONGO_URI"] = f"{mongo_uri}/{mongo_dbname}"
@@ -87,4 +87,4 @@ def update_saved():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

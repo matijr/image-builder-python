@@ -1,4 +1,4 @@
-# Define variables for the playbook
+### Define variables for the playbook ###
 - hosts: localhost
   vars:
     docker_image: python-flask
@@ -8,10 +8,13 @@
     deployment_name: flask-api
     deployment_port: 5000
     deployment_replicas: 1
+    service_type: NodePort
+    service_port: 30500
+    port_name: http
 
-  # Create Docker image and push to minikube registry
   tasks:
-    # Clean up existing deployment and image
+
+    # Clean up existing api deployment and image #
     - name: Delete existing deployment if it exists
       ansible.builtin.command:
         cmd: kubectl delete deployment {{ deployment_name }}
@@ -21,7 +24,10 @@
       ansible.builtin.command:
         cmd: minikube image rm "{{ docker_image }}:{{ docker_tag }}"
       ignore_errors: yes
+    
 
+
+    # Create Docker image and push to minikube registry #
     - name: Create Docker image
       community.docker.docker_image:
         build:
@@ -35,12 +41,31 @@
       ansible.builtin.command:
         cmd: minikube image load "{{ docker_image }}:{{ docker_tag }}"
 
+
+
     # Create K8s deployment
     - name: Generate deployment
       ansible.builtin.template:
         src: templates/deployment.yaml.j2
         dest: /tmp/deployment.yaml
     
+    - name: Generate service
+      ansible.builtin.template:
+        src: templates/svc.yaml.j2
+        dest: /tmp/svc.yaml
+
+    - name: Apply service
+      ansible.builtin.command:
+        cmd: kubectl apply -f /tmp/svc.yaml
+
     - name: Apply deployment
       ansible.builtin.command:
         cmd: kubectl apply -f /tmp/deployment.yaml
+
+
+    # Expose ingress-nginx controller
+    - name: apply ingress-nginx controller
+      ansible.builtin.command:
+        cmd: kubectl apply -f ingress/ingress.yaml -n ingress-nginx
+
+
